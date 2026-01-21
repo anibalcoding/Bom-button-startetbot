@@ -30,7 +30,6 @@
       return;
     }
 
-    // prevent old messages from showing
     if (!data?.ts || Date.now() - data.ts > 5 * 60 * 1000) {
       sessionStorage.removeItem(STORAGE_KEY);
       return;
@@ -38,7 +37,6 @@
 
     const { added = [], skipped = [] } = data;
 
-    // Insert above cart content
     const anchor =
       document.querySelector(".cart") ||
       document.querySelector(".cart-content") ||
@@ -94,6 +92,7 @@
 
   if (window.location.pathname === CART_PATH) {
     document.addEventListener("DOMContentLoaded", renderCartMessage);
+
     let tries = 0;
     const t = setInterval(() => {
       tries++;
@@ -101,6 +100,7 @@
       renderCartMessage();
       if (document.getElementById("starter-bom-cart-message") || tries > 20) clearInterval(t);
     }, 250);
+
     return;
   }
 
@@ -109,24 +109,41 @@
   // -----------------------------
   if (window.location.pathname !== TARGET_PATH) return;
 
-  async function fetchCartHtml() {
-    const r = await fetch("/cart.php", {
+  function sleep(ms) {
+    return new Promise((res) => setTimeout(res, ms));
+  }
+
+  async function fetchCartHtmlFresh() {
+    const url = `/cart.php?_=${Date.now()}_${Math.random().toString(16).slice(2)}`;
+    const r = await fetch(url, {
       credentials: "include",
       cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
     });
     return await r.text();
   }
 
-  function escapeRegExp(s) {
-    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  }
+  // ✅ Reliable cart parsing using DOMParser (no regex for HTML structure)
+  function getSkuQtyFromCartHtml(cartHtml, sku) {
+    const doc = new DOMParser().parseFromString(cartHtml, "text/html");
+    const rows = doc.querySelectorAll("tr.cart-item");
 
-  // Count occurrences of SKU in cart HTML.
-  // This is intentionally simple and tokenless.
-  function countSkuInCartHtml(cartHtml, sku) {
-    const re = new RegExp(escapeRegExp(sku), "g");
-    const m = cartHtml.match(re);
-    return m ? m.length : 0;
+    for (const row of rows) {
+      const dd = row.querySelector("dd.definitionList-value");
+      if (!dd) continue;
+
+      const rowSku = (dd.textContent || "").trim();
+      if (rowSku !== sku) continue;
+
+      const qtyInput = row.querySelector("input.cart-item-qty-input");
+      const qty = qtyInput ? parseInt(qtyInput.getAttribute("value") || "0", 10) : 0;
+      return Number.isFinite(qty) ? qty : 0;
+    }
+
+    return 0;
   }
 
   async function tryAddSku(sku, qty) {
@@ -135,11 +152,15 @@
       credentials: "include",
       redirect: "follow",
       cache: "no-store",
+      headers: {
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+      },
     });
 
     const text = await r.text();
 
-    // Best-effort: only look inside the error box to avoid false positives
+    // Best-effort reason parsing (only inside error box)
     const errorMatch = text.match(/alertBox--error[\s\S]*?<\/div>/i);
     const errorHtml = errorMatch ? errorMatch[0] : "";
     const hasErrorBox = !!errorHtml;
@@ -156,37 +177,43 @@
     else if (hasErrorBox) reason = "Could not add item";
     else if (!r.ok) reason = `Request failed (HTTP ${r.status})`;
 
-    // This "ok" is best-effort only; we’ll verify via cart.php HTML
-    const ok = r.ok && !hasErrorBox;
-
-    return { ok, status: r.status, reason };
+    return { status: r.status, reason };
   }
 
-  async function addManyToCartVerifiedViaCartHtml(items) {
+  async function verifyQtyIncrease(sku, beforeQty, qtyToAdd) {
+    const target = beforeQty + qtyToAdd;
+
+    for (let i = 0; i < 10; i++) {
+      const html = await fetchCartHtmlFresh();
+      const q = getSkuQtyFromCartHtml(html, sku);
+      if (q >= target) return { ok: true, afterQty: q };
+      await sleep(250);
+    }
+
+    const lastHtml = await fetchCartHtmlFresh();
+    const lastQty = getSkuQtyFromCartHtml(lastHtml, sku);
+    return { ok: lastQty >= target, afterQty: lastQty };
+  }
+
+  async function addManyToCartVerified(items) {
     const added = [];
     const skipped = [];
 
     for (const { sku, qty } of items) {
-      // Snapshot before
-      const beforeHtml = await fetchCartHtml();
-      const beforeCount = countSkuInCartHtml(beforeHtml, sku);
+      const beforeHtml = await fetchCartHtmlFresh();
+      const beforeQty = getSkuQtyFromCartHtml(beforeHtml, sku);
 
-      // Attempt add
       const res = await tryAddSku(sku, qty);
 
-      // Snapshot after
-      const afterHtml = await fetchCartHtml();
-      const afterCount = countSkuInCartHtml(afterHtml, sku);
+      const ver = await verifyQtyIncrease(sku, beforeQty, qty);
 
-      // If count increased, treat as added (works even if item was already in cart)
-      if (afterCount > beforeCount) {
+      if (ver.ok) {
         added.push({ sku, qty });
       } else {
         skipped.push({
           sku,
           qty,
           status: res.status,
-          // Only label out-of-stock/purchasable if we saw it; otherwise stay generic
           reason: res.reason || "Item out of stock",
         });
       }
@@ -206,7 +233,6 @@
     btn.id = BUTTON_ID;
     btn.textContent = "Add Starter Bot to Cart";
 
-    // Real button styling
     btn.className = "button";
     btn.style.backgroundColor = "#f05a28";
     btn.style.borderColor = "#f05a28";
@@ -220,7 +246,7 @@
       btn.textContent = "Adding items…";
 
       try {
-        const { added, skipped } = await addManyToCartVerifiedViaCartHtml(BOM_ITEMS);
+        const { added, skipped } = await addManyToCartVerified(BOM_ITEMS);
 
         sessionStorage.setItem(
           STORAGE_KEY,
@@ -238,7 +264,6 @@
       }
     });
 
-    // Wrap H1 and button together
     const wrapper = document.createElement("div");
     wrapper.style.display = "flex";
     wrapper.style.alignItems = "center";
