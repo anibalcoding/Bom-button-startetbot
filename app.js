@@ -20,11 +20,9 @@
     const r = await fetch(`/cart.php?${params.toString()}`, {
       credentials: "include",
       redirect: "follow",
-      // Some themes/storefronts behave better when you avoid cached responses
       cache: "no-store",
     });
 
-    // Note: cart.php may return HTML even when “error”; status is still the best simple signal
     return { ok: r.ok, status: r.status };
   }
 
@@ -39,7 +37,6 @@
         added.push({ sku, qty });
       } else {
         skipped.push({ sku, qty, status: res.status });
-        // keep going
       }
     }
 
@@ -49,21 +46,21 @@
   function injectButton() {
     if (document.getElementById(BUTTON_ID)) return true;
 
-    // Try common Stencil anchors near add-to-cart
-    const anchor =
-      document.querySelector('form[data-cart-item-add]') ||
-      document.querySelector("form.form") ||
-      document.querySelector(".productView-details") ||
-      document.querySelector(".productView");
-
-    if (!anchor) return false;
+    const heading = document.querySelector("h1.page-heading");
+    if (!heading) return false;
 
     const btn = document.createElement("button");
     btn.type = "button";
     btn.id = BUTTON_ID;
     btn.textContent = "Add Starter Bot BOM to Cart";
-    btn.style.cssText =
-      "margin-top:12px;width:100%;padding:12px 14px;font-weight:700;cursor:pointer;";
+
+    // Real button styling
+    btn.className = "button";
+    btn.style.backgroundColor = "#f05a28";
+    btn.style.borderColor = "#f05a28";
+    btn.style.color = "#ffffff";
+    btn.style.marginLeft = "12px";
+    btn.style.whiteSpace = "nowrap";
 
     btn.addEventListener("click", async () => {
       const original = btn.textContent;
@@ -73,11 +70,14 @@
       try {
         const { added, skipped } = await addManyToCartSkipFailures(BOM_ITEMS);
 
-        // Friendly summary (kept short so it’s not annoying)
         let msg = `Added ${added.length} item(s) to your cart.`;
         if (skipped.length) {
-          const top = skipped.slice(0, 8).map(s => `- ${s.sku} (x${s.qty})`).join("\n");
-          msg += `\n\nSkipped ${skipped.length} item(s) (likely out of stock / not purchasable):\n${top}`;
+          const top = skipped
+            .slice(0, 8)
+            .map(s => `- ${s.sku} (x${s.qty})`)
+            .join("\n");
+
+          msg += `\n\nSkipped ${skipped.length} item(s):\n${top}`;
           if (skipped.length > 8) msg += "\n…";
         }
 
@@ -89,11 +89,20 @@
       }
     });
 
-    anchor.appendChild(btn);
+    // Wrap H1 and button together
+    const wrapper = document.createElement("div");
+    wrapper.style.display = "flex";
+    wrapper.style.alignItems = "center";
+
+    heading.parentNode.insertBefore(wrapper, heading);
+    wrapper.appendChild(heading);
+    wrapper.appendChild(btn);
+
     return true;
   }
 
   document.addEventListener("DOMContentLoaded", injectButton);
+
   let tries = 0;
   const t = setInterval(() => {
     tries++;
