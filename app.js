@@ -1,102 +1,27 @@
 
-  (function () {
-  const TARGET_PATH = "/test/";
+(function () {
+  const TARGET_PATH = "/rev-ion/rev-ion-frc-starter-bot-2025/left-and-right-walls/";
   const CART_PATH = "/cart.php";
   const BUTTON_ID = "add-starter-bot-bom";
   const STORAGE_KEY = "starterBotBOM_baseline_compare_v4";
 
-  
+  // ✅ Your BOM list (SKU + qty to ADD)
   const BOM_ITEMS = [
-    { sku: "REV-19-2487-PK2", qty: 1 },
+    
+    { sku: "REV-21-2295-PK2", qty: 2 },
+    { sku: "REV-21-3293-PK2", qty: 2 },
     { sku: "REV-11-1850", qty: 1 },
-    { sku: "REV-11-2159", qty: 12 },
-    { sku: "REV-11-2158", qty: 1 },
-    { sku: "REV-11-3174", qty: 4 },
-    { sku: "REV-11-1275-PK4", qty: 1 },
-    { sku: "REV-21-1135", qty: 6 },
-    { sku: "REV-21-1583", qty: 2 },
-    { sku: "REV-21-1652", qty: 12 },
-    { sku: "REV-21-1650", qty: 1 },
-    { sku: "REV-21-1653", qty: 1 },
-    { sku: "REV-21-1651", qty: 1 },
-    { sku: "REV-21-1916-PK4", qty: 9 },
-    { sku: "REV-21-1934", qty: 2 },
-    { sku: "REV-21-2003-PK10", qty: 1 },
-    { sku: "REV-21-2004-PK10", qty: 1 },
-    { sku: "REV-21-2005-PK10", qty: 1 },
-    { sku: "REV-21-2006-PK10", qty: 1 },
-    { sku: "REV-21-2029-PK4", qty: 4 },
-    { sku: "REV-21-2037-PK2", qty: 6 },
-    { sku: "REV-21-2085-PK10", qty: 3 },
-    { sku: "REV-21-2086-PK10", qty: 1 },
-    { sku: "REV-21-2101", qty: 1 },
-    { sku: "REV-21-2102", qty: 2 },
-    { sku: "REV-21-2130", qty: 2 },
-    { sku: "REV-21-2205", qty: 4 },
-    { sku: "REV-21-2295-PK2", qty: 9 },
-    { sku: "REV-21-2296-PK2", qty: 2 },
-    { sku: "REV-21-2298-PK2", qty: 1 },
-    { sku: "REV-21-2302-PK2", qty: 2 },
-    { sku: "REV-21-2317-PK2", qty: 2 },
-    { sku: "REV-21-2319-PK2", qty: 2 },
-    { sku: "REV-21-2329-PK2", qty: 1 },
-    { sku: "REV-21-2359-PK2", qty: 1 },
-    { sku: "REV-21-2376-PK2", qty: 3 },
-    { sku: "REV-21-2444", qty: 6 },
-    { sku: "REV-21-2457", qty: 7 },
-    { sku: "REV-21-2520", qty: 2 },
-    { sku: "REV-21-2541-PK10", qty: 1 },
-    { sku: "REV-21-2542-PK10", qty: 2 },
-    { sku: "REV-21-2543-PK5", qty: 5 },
-    { sku: "REV-21-2581", qty: 8 },
-    { sku: "REV-21-2589-PK2", qty: 2 },
-    { sku: "REV-21-2805-PK25", qty: 1 },
-    { sku: "REV-21-2810", qty: 4 },
-    { sku: "REV-21-2812", qty: 1 },
-    { sku: "REV-21-3006", qty: 4 },
-    { sku: "REV-21-3005", qty: 4 },
-    { sku: "REV-21-3011", qty: 2 },
-    { sku: "REV-21-3197-PK4", qty: 2 },
-    { sku: "REV-21-3207", qty: 3 },
-    { sku: "REV-21-3289", qty: 2 },
-    { sku: "REV-21-3293-PK2", qty: 5 },
-    { sku: "REV-21-3410", qty: 3 },
-    { sku: "REV-21-3420-PK2", qty: 5 },
-    { sku: "REV-21-3428-PK2", qty: 1 },
-    { sku: "REV-21-3476", qty: 2 },
-    { sku: "REV-21-3540", qty: 6 },
-    { sku: "REV-21-3543", qty: 1 },
+    { sku: "REV-21-3207", qty: 1 },
+    { sku: "REV-21-3410", qty: 1 },
+    { sku: "REV-21-3540", qty: 2 },
     { sku: "REV-21-3552", qty: 2 },
-    { sku: "REV-21-3555", qty: 2 },
-    { sku: "REV-21-3558", qty: 3 },
-    { sku: "REV-21-3564", qty: 4 },
-    { sku: "REV-21-3610", qty: 10 },
-    { sku: "REV-21-3611", qty: 10 },
+    { sku: "REV-21-3580", qty: 1 },
+    { sku: "REV-21-3610", qty: 4 },
     { sku: "REV-21-3612", qty: 2 },
-    { sku: "REV-21-3613", qty: 9 },
-    { sku: "REV-21-3617-PK30", qty: 1 },
-    { sku: "REV-21-3620-PK30", qty: 1 },
-    { sku: "REV-21-3738-PK25", qty: 1 },
-    { sku: "REV-21-3739-PK25", qty: 1 },
-    { sku: "REV-21-4048", qty: 1 },
-    { sku: "REV-21-4056", qty: 1 },
-    { sku: "REV-21-4064", qty: 1 },
-    { sku: "REV-21-4072", qty: 1 },
-    { sku: "REV-21-4168", qty: 7 },
-    { sku: "REV-21-6567", qty: 7 },
-    { sku: "REV-25-2109", qty: 2 },
-    { sku: "REV-25-2224", qty: 17 },
-    { sku: "REV-29-1016-PK100", qty: 3 },
-    { sku: "REV-29-2912-PK50", qty: 1 },
-    { sku: "REV-29-2941-PK50", qty: 2 },
-    { sku: "REV-29-2943-PK50", qty: 2 },
-    { sku: "REV-29-2945-PK50", qty: 1 },
-    { sku: "REV-29-2947-PK50", qty: 1 },
-    { sku: "REV-29-2953-PK50", qty: 1 },
-    { sku: "REV-29-2955-PK50", qty: 3 },
-    { sku: "REV-29-2960-PK25", qty: 1 },
-    { sku: "REV-29-2961-PK25", qty: 3 },
-    { sku: "REV-29-2962-PK25", qty: 1 },
+    { sku: "REV-29-1016-PK100", qty: 1 },
+    { sku: "REV-29-2941-PK50", qty: 1 },
+    { sku: "REV-29-2955-PK50", qty: 1 },
+    { sku: "REV-29-2961-PK25", qty: 1 },
   ];
 
   // -----------------------------
@@ -153,7 +78,8 @@
       headers: { "Cache-Control": "no-cache", Pragma: "no-cache" },
     });
 
-   
+    // Important: consume body to complete request reliably
+    // (some browsers keep connection busy otherwise)
     try {
       await r.text();
     } catch {
@@ -308,7 +234,7 @@
     const btn = document.createElement("button");
     btn.type = "button";
     btn.id = BUTTON_ID;
-    btn.textContent = "Add Starter Bot BOM to Cart";
+    btn.textContent = "Add all items to Cart";
 
     btn.className = "button";
     btn.style.backgroundColor = "#f05a28";
@@ -342,7 +268,7 @@
 
         const skuQtyPairs = Object.keys(bomMap).map((sku) => ({ sku, qty: bomMap[sku] }));
 
-        
+        // ✅ IMPORTANT: sequential (concurrency=1) to avoid cart session clobbering
         // Delay is tunable. Start at 120ms; if it’s still flaky, raise to 200–300ms.
         await addAllSequentialWithRetry(skuQtyPairs, {
           delayMs: 120,
@@ -379,5 +305,4 @@
     if (injectButton() || tries > 20) clearInterval(t);
   }, 250);
 })();
-
 
